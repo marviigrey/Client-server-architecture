@@ -11,4 +11,11 @@ Step 2: After testing our application and seeing it work we then move to creatin
 for the SG of the ALB, we will need to open port 80. so we can map it to the target  group of our instances.
 
 Step 3: We will not be adding any database yet,but we will see it in the next project. after creating the SG for the ALB,the target group and the ALB, we move forward to registering the instance into our newly created target group.
-after registering the instances,we go to the sg of that single instance and edit the inbound rule to only receive traffic from our alb SG.
+after registering the instances,we go to the sg of that single instance and edit the inbound rule to only receive traffic from our alb SG. By doing this,we can only reach our aplication by the dns link of our load balancer and not wiith the public ip of our instances. The dns link looks like this:
+  "http://demo-alb-663644520.us-east-1.elb.amazonaws.com".
+  
+Step 4: We create an auto scaling group with multiple availability zone enabled,this solves the problem of disaster recovery and also high-availability. while creating the ASG we attach our Application load-balancer to the ASG too.
+
+Step 5: Creating Route53 domain registrar and DNS records (an A record to be precise because we want traffic to be routed to the public ip) for our application. also enabling the Alias type so dns queries will be directed to our ALB. The routing policy will be set to simple or latency, any of the two would be just fine.
+We create a public hosted zone because we are on a public network. The name will be "marvelloustime.com", then we create a dns record and it shoould be of type A and it should be attached to our existing load balancer and our routing policy set to simple.  we will not attach any subdomain leaving it as "marvelloustime.com"  with the alias setting turned on. 
+NOTE: you must have purchased a domain registrar on aws for you to actually have your domain records work,this is the end  of this project thank your for reading.
