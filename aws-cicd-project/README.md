@@ -56,6 +56,67 @@ create a single environment called "aws-code-family".
     
         git config --global user.name <username>
         git config --global user.email <user email address>
-    - cd ~/environment/unicorn-web-project
-      git init -b main
-      git remote add origin <HTTPS CodeCommit repo URL>
+        cd ~/environment/unicorn-web-project
+        git init -b main
+        git remote add origin <HTTPS CodeCommit repo URL>
+        
+        git add *
+        git commit -m "new codecommit"
+        git push -u origin main
+        
+    - refresh the dashboard of your codeCommit repository and you will see your files below.
+    
+4. Next step is to build artifacts using CodeArtifact. This service is fully managed artifactory
+   used for to securely fetch,store,publish and share software packages in software
+   development process.
+   - we navigate to the AWS dashboard and search CodeArtifact. Create a domain 
+     with the name "unicorn".
+   - after creating a domain, still in the CodeArtifact dashboard, create a repository with the
+     name "unicorn-packages", write any description, select maven-central-store as a public upstream.
+   - after creating, connect to the CodeArtifact repository. To connect this we will need to fetch an 
+     authentication token to connect to our CodeArtifact repository. run:
+        
+        export CODEARTIFACT_AUTH_TOKEN=`aws codeartifact get-authorization-token --domain unicorns --domain-owner <your-domain-owner-id> --query authorizationToken --output text`
+
+   - or you can copy it from the "create connections settings" in your CodeArtifact dashboard.
+   - next step is to create a settings.xml file inside our /environment/unicorn-project directory.
+   - start the settings.xml file with:
+        "<settings> </settings>"
+   - in your connections settings you will see the profiles and mirrors code settings, copy and paste them
+     into the settings.xml, it will look like the settings.xml file in this repo.
+
+   -  so when we are done we can test the application locally on our cloud9 environment using:
+             " mvn -s settings.xml compile "
+   - if you get a successul build, check the CodeArtifact dashboard to see the list of compiled packages.
+   - Next we create a policy to enable other aws services such as codeBuild,codeDeploy etc to be able to 
+    use our newly created CodeArtifact repository. 
+    Navigate to the IAM dashboard on AWS console and select policies, create a neew policy and name it 
+    "policy-for-codeArtifact". Select JSON and paste this code:
+
+    
+    {
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+          "Effect": "Allow",
+          "Action": [ "codeartifact:GetAuthorizationToken",
+                      "codeartifact:GetRepositoryEndpoint",
+                      "codeartifact:ReadFromRepository"
+                      ],
+          "Resource": "*"
+      },
+      {       
+          "Effect": "Allow",
+          "Action": "sts:GetServiceBearerToken",
+          "Resource": "*",
+          "Condition": {
+              "StringEquals": {
+                  "sts:AWSServiceName": "codeartifact.amazonaws.com"
+              }
+          }
+      }
+  ]
+}
+
+create the Policy.
+
